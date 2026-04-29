@@ -42,11 +42,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q = "", lang = "all" } = await searchParams;
 
   return (
-    <main className="max-w-5xl mx-auto px-5 py-10 flex flex-col gap-8">
+    <main className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 py-8 sm:py-10 lg:py-12 flex flex-col gap-6 sm:gap-8 lg:gap-10">
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Sentence Search</h1>
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-1 lg:gap-2">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight">Sentence Search</h1>
+        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
           Search across English, Urdu &amp; Arabic
         </p>
       </div>

@@ -36,29 +36,29 @@ export default function SearchBar() {
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
 
       {/* Search Input */}
-      <div className="relative flex items-center">
-        <Search className="absolute left-3 size-4 text-muted-foreground pointer-events-none" />
+      <div className="relative flex items-center flex-1 md:max-w-md lg:max-w-lg">
+        <Search className="absolute left-3 md:left-3.5 size-4 md:size-5 text-muted-foreground pointer-events-none" />
 
         <Input
           type="search"
           placeholder="Search sentences…"
           defaultValue={q}
           onChange={(e) => updateParams({ q: e.target.value, lang })}
-          className="pl-9 pr-9 h-11 text-base"
+          className="pl-10 pr-10 h-10 sm:h-11 md:h-12 text-sm sm:text-base md:text-lg"
           aria-label="Search query"
           autoFocus
         />
 
         {isPending && (
-          <Loader2 className="absolute right-3 size-4 text-muted-foreground animate-spin" />
+          <Loader2 className="absolute right-3 md:right-3.5 size-4 md:size-5 text-muted-foreground animate-spin" />
         )}
       </div>
 
       {/* Language Tabs */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Language filter">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 shrink-0" role="tablist" aria-label="Language filter">
         {FIELDS.map(({ value, label, dir }) => (
           <Button
             key={value}
@@ -69,7 +69,7 @@ export default function SearchBar() {
             dir={dir}
             onClick={() => updateParams({ q, lang: value })}
             className={cn(
-              "rounded-full text-sm transition-all",
+              "rounded-full text-xs sm:text-sm md:text-base transition-all px-2.5 sm:px-3 md:px-4 h-7 sm:h-8 md:h-9",
               lang === value && "shadow-none",
               value === "urdu" && "urdu",
               value === "arb" && "arabic"

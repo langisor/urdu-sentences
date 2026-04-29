@@ -81,7 +81,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
     {
       accessorKey: "id",
       header: "#",
-      size: 52,
+      size: 60,
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground font-medium tabular-nums">
           {row.getValue("id")}
@@ -91,7 +91,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
     {
       accessorKey: "matchedField",
       header: "Match",
-      size: 80,
+      size: 90,
       cell: ({ row }) => {
         const field = row.getValue<string>("matchedField");
         return (
@@ -108,7 +108,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
       accessorKey: "eng",
       header: "English",
       cell: ({ row }) => (
-        <p className="text-sm leading-relaxed">
+        <p className="text-sm md:text-base leading-relaxed">
           <Highlighted text={row.getValue("eng")} query={query} />
         </p>
       ),
@@ -119,7 +119,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
       cell: ({ row }) => (
         <p
           dir="rtl"
-          className="urdu text-right text-base leading-loose"
+          className="urdu text-right text-base md:text-lg leading-loose"
         >
           <Highlighted text={row.getValue("urdu")} query={query} />
         </p>
@@ -129,7 +129,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
       accessorKey: "arb",
       header: "Arabic",
       cell: ({ row }) => (
-        <p dir="rtl" className="arabic text-right text-base leading-loose">
+        <p dir="rtl" className="arabic text-right text-base md:text-lg leading-loose">
           <Highlighted text={row.getValue("arb")} query={query} />
         </p>
       ),
@@ -170,19 +170,23 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
   const lastRow    = Math.min(firstRow + pageSize - 1, totalRows);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:gap-6">
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-muted-foreground">
-          {totalRows} result{totalRows !== 1 ? "s" : ""} for{" "}
-          <span className="font-medium text-foreground">"{query}"</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 md:gap-4">
+        <p className="text-xs md:text-sm text-muted-foreground">
+          {totalRows} result{totalRows !== 1 ? "s" : ""}
+          {query && (
+            <span className="hidden sm:inline">
+              {" "}for <span className="font-medium text-foreground">"{query}"</span>
+            </span>
+          )}
         </p>
 
         {/* Column visibility toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-xs">
+            <Button variant="outline" size="sm" className="ml-auto gap-1.5 text-xs md:text-sm">
               Columns <ChevronDown className="size-3.5" />
             </Button>
           </DropdownMenuTrigger>
@@ -205,8 +209,8 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
       </div>
 
       {/* ── Table ── */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto lg:overflow-visible">
+        <Table className="min-w-[640px] lg:min-w-full">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
@@ -230,7 +234,7 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} className="align-top">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
+                    <TableCell key={cell.id} className="py-2 sm:py-3 md:py-4 px-2 sm:px-4 md:px-6">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -251,10 +255,10 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
       </div>
 
       {/* ── Pagination ── */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 md:gap-6">
 
         {/* Rows per page */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-2 text-xs md:text-sm text-muted-foreground">
           <span>Rows per page</span>
           <Select
             value={String(pageSize)}
@@ -274,12 +278,12 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
         </div>
 
         {/* Page info */}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs md:text-sm text-muted-foreground">
           {firstRow}–{lastRow} of {totalRows}
         </span>
 
         {/* Navigation buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center sm:justify-start gap-1 w-full sm:w-auto">
           <Button
             variant="outline" size="icon" className="size-8"
             onClick={() => table.setPageIndex(0)}
@@ -297,7 +301,7 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
             <ChevronLeft className="size-4" />
           </Button>
 
-          <span className="text-xs text-muted-foreground px-2 tabular-nums">
+          <span className="text-xs md:text-sm text-muted-foreground px-2 md:px-3 tabular-nums">
             {pageIndex + 1} / {pageCount || 1}
           </span>
 

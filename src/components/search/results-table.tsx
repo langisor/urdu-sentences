@@ -62,6 +62,35 @@ function Highlighted({ text, query }: { text: string; query: string }) {
   );
 }
 
+// ── Wrapped text with character limit ─────────────────────────────────────────
+
+function WrappedText({
+  text,
+  query,
+  mobileLimit = 20,
+  desktopLimit = 30,
+}: {
+  text: string;
+  query: string;
+  mobileLimit?: number;
+  desktopLimit?: number;
+}) {
+  const shouldWrap = text.length > mobileLimit;
+  const longText = text.length > desktopLimit;
+
+  return (
+    <span
+      className={cn(
+        "inline-block",
+        shouldWrap && "max-w-[20ch] sm:max-w-[30ch] wrap-break-word whitespace-normal"
+      )}
+      title={longText ? text : undefined}
+    >
+      <Highlighted text={text} query={query} />
+    </span>
+  );
+}
+
 // ── Badge per matched field ───────────────────────────────────────────────────
 
 const FIELD_BADGE: Record<string, string> = {
@@ -109,7 +138,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
       header: "English",
       cell: ({ row }) => (
         <p className="text-sm md:text-base leading-relaxed">
-          <Highlighted text={row.getValue("eng")} query={query} />
+          <WrappedText text={row.getValue("eng")} query={query} />
         </p>
       ),
     },
@@ -121,7 +150,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
           dir="rtl"
           className="urdu text-right text-base md:text-lg leading-loose"
         >
-          <Highlighted text={row.getValue("urdu")} query={query} />
+          <WrappedText text={row.getValue("urdu")} query={query} />
         </p>
       ),
     },
@@ -130,7 +159,7 @@ function buildColumns(query: string): ColumnDef<SearchResult>[] {
       header: "Arabic",
       cell: ({ row }) => (
         <p dir="rtl" className="arabic text-right text-base md:text-lg leading-loose">
-          <Highlighted text={row.getValue("arb")} query={query} />
+          <WrappedText text={row.getValue("arb")} query={query} />
         </p>
       ),
     },
@@ -218,7 +247,7 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
                   <TableHead
                     key={header.id}
                     style={{ width: header.column.columnDef.size }}
-                    className="text-xs font-semibold"
+                    className="text-xs font-semibold text-center border-r last:border-r-0 px-2 sm:px-4"
                   >
                     {header.isPlaceholder
                       ? null
@@ -232,9 +261,9 @@ export default function ResultsTable({ data, query }: ResultsTableProps) {
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="align-top">
+                <TableRow key={row.id} className="align-top odd:bg-muted/40">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-2 sm:py-3 md:py-4 px-2 sm:px-4 md:px-6">
+                    <TableCell key={cell.id} className="py-2 sm:py-3 md:py-4 px-2 sm:px-4 md:px-6 border-r last:border-r-0">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

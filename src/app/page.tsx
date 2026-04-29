@@ -1,29 +1,24 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import { searchSentences, getAllSentences, type SearchField } from "@/app/actions/search";
+import { searchSentences, getAllSentences } from "@/app/actions/search";
 import SearchBar from "@/components/search/search-bar";
 import ResultsTable from "@/components/search/results-table";
 
 export const metadata = { title: "Search Sentences" };
 
-const FIELD_LABEL: Record<string, string> = {
-  eng: "English", urdu: "Urdu", arb: "Arabic",
-};
-
 // ── Results ───────────────────────────────────────────────────────────────────
 
-async function Results({ query, lang }: { query: string; lang: SearchField }) {
+async function Results({ query }: { query: string }) {
   // No query → show everything
   const results = query.trim()
-    ? await searchSentences(query, lang)
+    ? await searchSentences(query)
     : await getAllSentences();
 
   if (!results.length) {
     return (
       <p className="text-center text-muted-foreground text-sm py-16">
         {query.trim()
-          ? <>No results for <span className="font-medium text-foreground">"{query}"</span>
-              {lang !== "all" && ` in ${FIELD_LABEL[lang]}`}.</>
+          ? <>No results for <span className="font-medium text-foreground">"{query}"</span>.</>
           : "No sentences found in the database."}
       </p>
     );
@@ -35,11 +30,11 @@ async function Results({ query, lang }: { query: string; lang: SearchField }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 interface SearchPageProps {
-  searchParams: Promise<{ q?: string; lang?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const { q = "", lang = "all" } = await searchParams;
+  const { q = "" } = await searchParams;
 
   return (
     <main className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 py-8 sm:py-10 lg:py-12 flex flex-col gap-6 sm:gap-8 lg:gap-10">
@@ -61,7 +56,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         }>
-          <Results query={q} lang={lang as SearchField} />
+          <Results query={q} />
         </Suspense>
       </section>
 

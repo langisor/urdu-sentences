@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+.urdu {
+  font-family: var(--font-noto-nastaliq-urdu);
+}
+
+.arabic {
+  font-family: var(--font-noto-naskh-arabic);
+}

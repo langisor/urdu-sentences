@@ -46,8 +46,8 @@ export async function searchSentences(
   }
 
   const result = await connection.run(sql, params);
-  const rows = result.getRows();
-  await connection.close();
+  const rows = await result.getRows();
+  connection.closeSync();
 
   return rows.map((row: unknown[]) => ({
     id: Number(row[0]),
@@ -67,8 +67,8 @@ export async function getAllSentences(): Promise<SearchResult[]> {
     "SELECT id, urdu, eng, arb FROM sentences ORDER BY id"
   );
 
-  const rows = result.getRows();
-  await connection.close();
+  const rows = await result.getRows();
+  connection.closeSync();
 
   return rows.map((row: unknown[]) => ({
     id: Number(row[0]),

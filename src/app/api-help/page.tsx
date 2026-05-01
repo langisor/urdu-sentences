@@ -18,8 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const metadata = { title: "API Documentation" };
-
 // ── Code Block Component ────────────────────────────────────────────────────
 
 interface CodeBlockProps {

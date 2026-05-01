@@ -23,7 +23,7 @@ export async function getDuckDBInstance(): Promise<DuckDBInstance> {
       )
     `);
 
-    await connection.close();
+    connection.closeSync();
 
     globalForDuckDB.duckdbInstance = instance;
   }

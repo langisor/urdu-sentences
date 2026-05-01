@@ -43,8 +43,8 @@ async function seed() {
     await prepared.run();
   }
 
-  await prepared.dispose();
-  await connection.close();
+  prepared.destroySync();
+  connection.closeSync();
 
   console.log("✅ Seeding complete!");
 }

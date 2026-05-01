@@ -14,8 +14,8 @@ export async function getSentence(id: number): Promise<Sentence | null> {
     [id]
   );
 
-  const rows = result.getRows();
-  await connection.close();
+  const rows = await result.getRows();
+  connection.closeSync();
 
   if (rows.length === 0) return null;
 
@@ -37,8 +37,8 @@ export async function getAllSentences(): Promise<Sentence[]> {
     "SELECT id, urdu, eng, arb FROM sentences ORDER BY id"
   );
 
-  const rows = result.getRows();
-  await connection.close();
+  const rows = await result.getRows();
+  connection.closeSync();
 
   return rows.map((row: unknown[]) => ({
     id: Number(row[0]),

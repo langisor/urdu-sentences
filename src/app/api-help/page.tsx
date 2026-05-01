@@ -118,16 +118,14 @@ function EndpointCard({ method, path, description, params }: EndpointCardProps) 
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function ApiHelpPage() {
-  const baseUrl = typeof window !== "undefined" 
-    ? `${window.location.origin}/api/search`
-    : "/api/search";
+const API_BASE_URL = "https://urdu-sentences.netlify.app/api/search";
 
-  const curlExample = `curl "${baseUrl}?q=hello&field=all"`;
+export default function ApiHelpPage() {
+  const curlExample = `curl "${API_BASE_URL}?q=hello&field=all"`;
 
   const fetchExample = `// Using fetch API
 const response = await fetch(
-  "/api/search?q=hello&field=all"
+  "${API_BASE_URL}?q=hello&field=all"
 );
 
 if (!response.ok) {
@@ -138,6 +136,42 @@ const data = await response.json();
 
 console.log(data.results); // Array of matching sentences
 console.log(data.count);   // Number of results`;
+
+  const tsTypesExample = `// TypeScript Types for the Search API
+
+export type SearchField = "all" | "urdu" | "eng" | "arb";
+
+export interface SearchResult {
+  id: number;
+  urdu: string;
+  eng: string;
+  arb: string;
+  matchedField: SearchField;
+}
+
+export interface SearchResponse {
+  query: string | null;
+  field: SearchField;
+  count: number;
+  results: SearchResult[];
+}
+
+// Example usage with types
+async function searchSentences(
+  query: string,
+  field: SearchField = "all"
+): Promise<SearchResponse> {
+  const params = new URLSearchParams({ q: query, field });
+  const response = await fetch(
+    \`https://urdu-sentences.netlify.app/api/search?\${params}\`
+  );
+  
+  if (!response.ok) {
+    throw new Error(\`Search failed: \${response.statusText}\`);
+  }
+  
+  return response.json();
+}`;
 
   const responseExample = `{
   "query": "hello",
@@ -235,9 +269,10 @@ console.log(data.count);   // Number of results`;
             </div>
 
             <Tabs defaultValue="curl" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
+              <TabsList className="grid w-full grid-cols-4 h-9 sm:h-10">
                 <TabsTrigger value="curl" className="text-xs sm:text-sm">cURL</TabsTrigger>
-                <TabsTrigger value="fetch" className="text-xs sm:text-sm">Fetch API</TabsTrigger>
+                <TabsTrigger value="fetch" className="text-xs sm:text-sm">Fetch</TabsTrigger>
+                <TabsTrigger value="typescript" className="text-xs sm:text-sm">TypeScript</TabsTrigger>
                 <TabsTrigger value="response" className="text-xs sm:text-sm">Response</TabsTrigger>
               </TabsList>
               
@@ -261,6 +296,17 @@ console.log(data.count);   // Number of results`;
                 <p className="text-xs sm:text-sm text-muted-foreground mt-3">
                   Use this in your frontend code or Node.js applications. 
                   Supports all modern browsers and runtimes.
+                </p>
+              </TabsContent>
+
+              <TabsContent value="typescript" className="mt-4">
+                <CodeBlock 
+                  code={tsTypesExample} 
+                  language="typescript" 
+                  title="TypeScript Types & Usage"
+                />
+                <p className="text-xs sm:text-sm text-muted-foreground mt-3">
+                  Copy these types into your project for full type safety when using the API.
                 </p>
               </TabsContent>
 

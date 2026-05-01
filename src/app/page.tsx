@@ -1,8 +1,10 @@
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Loader2, BookOpen, Search as SearchIcon } from "lucide-react";
 import { searchSentences, getAllSentences } from "@/app/actions/search";
 import SearchBar from "@/components/search/search-bar";
 import ResultsTable from "@/components/search/results-table";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Search Sentences" };
 
@@ -37,14 +39,40 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q = "" } = await searchParams;
 
   return (
-    <main className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 py-8 sm:py-10 lg:py-12 flex flex-col gap-6 sm:gap-8 lg:gap-10">
+    <div className="min-h-full flex flex-col">
+      {/* Header Bar */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 lg:px-8">
+          <div className="flex h-14 sm:h-16 items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary/10">
+                <SearchIcon className="size-4 sm:size-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-base font-semibold leading-none">Urdu Sentences</h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 hidden sm:block">
+                  Search &amp; Explore
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="gap-1.5 h-8 sm:h-9">
+              <Link href="/api-help">
+                <BookOpen className="size-3.5 sm:size-4" />
+                <span className="text-xs sm:text-sm">API Docs</span>
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
 
-      <div className="flex flex-col gap-1 lg:gap-2">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight">Sentence Search</h1>
-        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
-          Search across English, Urdu &amp; Arabic
-        </p>
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 py-6 sm:py-8 lg:py-10 w-full flex flex-col gap-6 sm:gap-8 lg:gap-10">
+        <div className="flex flex-col gap-1 lg:gap-2">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight">Sentence Search</h2>
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
+            Search across English, Urdu &amp; Arabic
+          </p>
+        </div>
 
       <Suspense fallback={<div className="h-11 rounded-md bg-muted animate-pulse" />}>
         <SearchBar />
@@ -60,6 +88,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </Suspense>
       </section>
 
-    </main>
+      </main>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { getRedisClient } from "@/lib/redis";
+import { getDuckDBInstance } from "@/lib/duckdb";
 import type { Sentence } from "@/types/sentences";
 
 export type SearchField = "all" | "urdu" | "eng" | "arb";
@@ -15,66 +15,66 @@ export async function searchSentences(
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
-  const client = await getRedisClient();
-  const ids = await client.sMembers("sentences:ids");
-  if (!ids.length) return [];
-
-  const pipeline = client.multi();
-  for (const id of ids) pipeline.hGetAll(`sentence:${id}`);
-  const results = await pipeline.exec();
+  const instance = await getDuckDBInstance();
+  const connection = await instance.connect();
 
   const normalizedQuery = query.toLowerCase().trim();
-  const matched: SearchResult[] = [];
+  const likePattern = `%${normalizedQuery}%`;
 
-  for (const entry of results) {
-    const data = entry as unknown as Record<string, string>;
-    if (!data || typeof data !== "object" || !data.id) continue;
+  let sql: string;
+  const params: string[] = [likePattern];
 
-    const sentence: Sentence = {
-      id:   Number(data.id),
-      urdu: data.urdu ?? "",
-      eng:  data.eng  ?? "",
-      arb:  data.arb  ?? "",
-    };
-
-    const fieldsToSearch: Array<Exclude<SearchField, "all">> =
-      field === "all" ? ["urdu", "eng", "arb"] : [field];
-
-    for (const f of fieldsToSearch) {
-      if (sentence[f]?.toLowerCase().includes(normalizedQuery)) {
-        matched.push({ ...sentence, matchedField: f });
-        break;
-      }
-    }
+  if (field === "all") {
+    sql = `
+      SELECT id, urdu, eng, arb,
+        CASE
+          WHEN LOWER(urdu) LIKE $1 THEN 'urdu'
+          WHEN LOWER(eng) LIKE $1 THEN 'eng'
+          WHEN LOWER(arb) LIKE $1 THEN 'arb'
+        END as matched_field
+      FROM sentences
+      WHERE LOWER(urdu) LIKE $1 OR LOWER(eng) LIKE $1 OR LOWER(arb) LIKE $1
+      ORDER BY id
+    `;
+  } else {
+    sql = `
+      SELECT id, urdu, eng, arb, '${field}' as matched_field
+      FROM sentences
+      WHERE LOWER(${field}) LIKE $1
+      ORDER BY id
+    `;
   }
 
-  return matched.sort((a, b) => a.id - b.id);
+  const result = await connection.run(sql, params);
+  const rows = result.getRows();
+  await connection.close();
+
+  return rows.map((row: unknown[]) => ({
+    id: Number(row[0]),
+    urdu: String(row[1]),
+    eng: String(row[2]),
+    arb: String(row[3]),
+    matchedField: row[4] as SearchField,
+  }));
 }
 
 // ── Returns every sentence, matchedField set to "all" ────────────────────────
 export async function getAllSentences(): Promise<SearchResult[]> {
-  const client = await getRedisClient();
-  const ids = await client.sMembers("sentences:ids");
-  if (!ids.length) return [];
+  const instance = await getDuckDBInstance();
+  const connection = await instance.connect();
 
-  const pipeline = client.multi();
-  for (const id of ids) pipeline.hGetAll(`sentence:${id}`);
-  const results = await pipeline.exec();
+  const result = await connection.run(
+    "SELECT id, urdu, eng, arb FROM sentences ORDER BY id"
+  );
 
-  const sentences: SearchResult[] = [];
+  const rows = result.getRows();
+  await connection.close();
 
-  for (const entry of results) {
-    const data = entry as unknown as Record<string, string>;
-    if (!data || typeof data !== "object" || !data.id) continue;
-
-    sentences.push({
-      id:           Number(data.id),
-      urdu:         data.urdu ?? "",
-      eng:          data.eng  ?? "",
-      arb:          data.arb  ?? "",
-      matchedField: "all",
-    });
-  }
-
-  return sentences.sort((a, b) => a.id - b.id);
+  return rows.map((row: unknown[]) => ({
+    id: Number(row[0]),
+    urdu: String(row[1]),
+    eng: String(row[2]),
+    arb: String(row[3]),
+    matchedField: "all" as SearchField,
+  }));
 }

@@ -1,14 +1,27 @@
 // scripts/seed.ts
-import { createClient } from "redis";
+import { DuckDBInstance } from "@duckdb/node-api";
 import * as fs from "fs";
 import * as path from "path";
 import type { Sentence } from "../src/types/sentences";
 
 async function seed() {
-  const client = createClient({ url: process.env.REDIS_URL ?? "redis://localhost:6379" });
+  // Use in-memory database or file-based if DUCKDB_PATH is set
+  const dbPath = process.env.DUCKDB_PATH ?? ":memory:";
+  const instance = await DuckDBInstance.create(dbPath);
+  const connection = await instance.connect();
 
-  client.on("error", (err) => console.error("Redis Error:", err));
-  await client.connect();
+  // Create sentences table
+  await connection.run(`
+    CREATE TABLE IF NOT EXISTS sentences (
+      id INTEGER PRIMARY KEY,
+      urdu VARCHAR NOT NULL,
+      eng VARCHAR NOT NULL,
+      arb VARCHAR NOT NULL
+    )
+  `);
+
+  // Clear existing data
+  await connection.run("DELETE FROM sentences");
 
   // Read the JSON file
   const filePath = path.join(process.cwd(), "src", "data", "sentences.json");
@@ -17,21 +30,23 @@ async function seed() {
 
   console.log(`Seeding ${sentences.length} sentences...`);
 
-  for (const sentence of sentences) {
-    // Store each sentence as a Redis Hash under key: sentence:{id}
-    await client.hSet(`sentence:${sentence.id}`, {
-      id: sentence.id.toString(),
-      urdu: sentence.urdu,
-      eng: sentence.eng,
-      arb: sentence.arb,
-    });
+  // Insert all sentences using a prepared statement for efficiency
+  const prepared = await connection.prepare(
+    "INSERT INTO sentences (id, urdu, eng, arb) VALUES ($1, $2, $3, $4)"
+  );
 
-    // Also maintain a Set of all IDs for easy lookup
-    await client.sAdd("sentences:ids", sentence.id.toString());
+  for (const sentence of sentences) {
+    prepared.bindInteger(1, sentence.id);
+    prepared.bindVarchar(2, sentence.urdu);
+    prepared.bindVarchar(3, sentence.eng);
+    prepared.bindVarchar(4, sentence.arb);
+    await prepared.run();
   }
 
+  await prepared.dispose();
+  await connection.close();
+
   console.log("✅ Seeding complete!");
-  await client.disconnect();
 }
 
 seed().catch((err) => {

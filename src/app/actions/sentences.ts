@@ -1,41 +1,49 @@
 // app/actions/sentences.ts
 "use server";
 
-import { getRedisClient } from "@/lib/redis";
+import { getDuckDBInstance } from "@/lib/duckdb";
 import type { Sentence } from "@/types/sentences";
 
 // Fetch a single sentence by ID
 export async function getSentence(id: number): Promise<Sentence | null> {
-  const client = await getRedisClient();
-  const data = await client.hGetAll(`sentence:${id}`);
+  const instance = await getDuckDBInstance();
+  const connection = await instance.connect();
 
-  if (!data || Object.keys(data).length === 0) return null;
+  const result = await connection.run(
+    "SELECT id, urdu, eng, arb FROM sentences WHERE id = $1",
+    [id]
+  );
 
+  const rows = result.getRows();
+  await connection.close();
+
+  if (rows.length === 0) return null;
+
+  const row = rows[0];
   return {
-    id: Number(data.id),
-    urdu: data.urdu,
-    eng: data.eng,
-    arb: data.arb,
+    id: Number(row[0]),
+    urdu: String(row[1]),
+    eng: String(row[2]),
+    arb: String(row[3]),
   };
 }
 
 // Fetch all sentences
 export async function getAllSentences(): Promise<Sentence[]> {
-  const client = await getRedisClient();
-  const ids = await client.sMembers("sentences:ids");
+  const instance = await getDuckDBInstance();
+  const connection = await instance.connect();
 
-  const sentences = await Promise.all(
-    ids.map(async (id) => {
-      const data = await client.hGetAll(`sentence:${id}`);
-      return {
-        id: Number(data.id),
-        urdu: data.urdu,
-        eng: data.eng,
-        arb: data.arb,
-      } as Sentence;
-    })
+  const result = await connection.run(
+    "SELECT id, urdu, eng, arb FROM sentences ORDER BY id"
   );
 
-  // Sort by ID since Sets are unordered
-  return sentences.sort((a, b) => a.id - b.id);
+  const rows = result.getRows();
+  await connection.close();
+
+  return rows.map((row: unknown[]) => ({
+    id: Number(row[0]),
+    urdu: String(row[1]),
+    eng: String(row[2]),
+    arb: String(row[3]),
+  }));
 }

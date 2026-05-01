@@ -1,6 +1,6 @@
 "use server";
 
-import { getDuckDBInstance } from "@/lib/duckdb";
+import sentencesData from "@/data/sentences.json";
 import type { Sentence } from "@/types/sentences";
 
 export type SearchField = "all" | "urdu" | "eng" | "arb";
@@ -9,72 +9,51 @@ export interface SearchResult extends Sentence {
   matchedField: SearchField;
 }
 
+const sentences: Sentence[] = sentencesData;
+
 export async function searchSentences(
   query: string,
   field: SearchField = "all"
 ): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
-  const instance = await getDuckDBInstance();
-  const connection = await instance.connect();
-
   const normalizedQuery = query.toLowerCase().trim();
-  const likePattern = `%${normalizedQuery}%`;
 
-  let sql: string;
-  const params: string[] = [likePattern];
+  const results: SearchResult[] = [];
 
-  if (field === "all") {
-    sql = `
-      SELECT id, urdu, eng, arb,
-        CASE
-          WHEN LOWER(urdu) LIKE $1 THEN 'urdu'
-          WHEN LOWER(eng) LIKE $1 THEN 'eng'
-          WHEN LOWER(arb) LIKE $1 THEN 'arb'
-        END as matched_field
-      FROM sentences
-      WHERE LOWER(urdu) LIKE $1 OR LOWER(eng) LIKE $1 OR LOWER(arb) LIKE $1
-      ORDER BY id
-    `;
-  } else {
-    sql = `
-      SELECT id, urdu, eng, arb, '${field}' as matched_field
-      FROM sentences
-      WHERE LOWER(${field}) LIKE $1
-      ORDER BY id
-    `;
+  for (const sentence of sentences) {
+    const urduLower = sentence.urdu.toLowerCase();
+    const engLower = sentence.eng.toLowerCase();
+    const arbLower = sentence.arb.toLowerCase();
+
+    let matchedField: SearchField | null = null;
+
+    if (field === "all") {
+      if (urduLower.includes(normalizedQuery)) matchedField = "urdu";
+      else if (engLower.includes(normalizedQuery)) matchedField = "eng";
+      else if (arbLower.includes(normalizedQuery)) matchedField = "arb";
+    } else if (field === "urdu" && urduLower.includes(normalizedQuery)) {
+      matchedField = "urdu";
+    } else if (field === "eng" && engLower.includes(normalizedQuery)) {
+      matchedField = "eng";
+    } else if (field === "arb" && arbLower.includes(normalizedQuery)) {
+      matchedField = "arb";
+    }
+
+    if (matchedField) {
+      results.push({
+        ...sentence,
+        matchedField,
+      });
+    }
   }
 
-  const result = await connection.run(sql, params);
-  const rows = await result.getRows();
-  connection.closeSync();
-
-  return rows.map((row: unknown[]) => ({
-    id: Number(row[0]),
-    urdu: String(row[1]),
-    eng: String(row[2]),
-    arb: String(row[3]),
-    matchedField: row[4] as SearchField,
-  }));
+  return results.sort((a, b) => a.id - b.id);
 }
 
 // ── Returns every sentence, matchedField set to "all" ────────────────────────
 export async function getAllSentences(): Promise<SearchResult[]> {
-  const instance = await getDuckDBInstance();
-  const connection = await instance.connect();
-
-  const result = await connection.run(
-    "SELECT id, urdu, eng, arb FROM sentences ORDER BY id"
-  );
-
-  const rows = await result.getRows();
-  connection.closeSync();
-
-  return rows.map((row: unknown[]) => ({
-    id: Number(row[0]),
-    urdu: String(row[1]),
-    eng: String(row[2]),
-    arb: String(row[3]),
-    matchedField: "all" as SearchField,
-  }));
+  return sentences
+    .map((s) => ({ ...s, matchedField: "all" as SearchField }))
+    .sort((a, b) => a.id - b.id);
 }

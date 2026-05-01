@@ -6,9 +6,10 @@ const globalForRedis = global as typeof global & {
 };
 
 function getRedisUrl(): string | undefined {
-  // Upstash Redis REST URL (preferred for serverless)
-  if (process.env.UPSTASH_REDIS_REST_URL) {
-    return process.env.UPSTASH_REDIS_REST_URL.replace("https://", "rediss://");
+  // Upstash Redis - convert REST URL to Redis protocol with token
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const host = process.env.UPSTASH_REDIS_REST_URL.replace("https://", "");
+    return `rediss://default:${process.env.UPSTASH_REDIS_REST_TOKEN}@${host}:6379`;
   }
   // Fallback to REDIS_URL
   return process.env.REDIS_URL;
